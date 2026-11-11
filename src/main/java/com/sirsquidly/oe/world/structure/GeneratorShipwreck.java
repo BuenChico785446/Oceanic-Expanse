@@ -21,6 +21,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -30,8 +31,7 @@ import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
-public class GeneratorShipwreck implements IWorldGenerator
-{		
+public class GeneratorShipwreck implements IWorldGenerator {
 	/** This the untouched Ship. */
 	ResourceLocation SHIP_FULL = new ResourceLocation(Main.MOD_ID, "shipwreck_full");
 	ResourceLocation SHIP_UP1 = new ResourceLocation(Main.MOD_ID, "shipwreck_up1");
@@ -44,38 +44,39 @@ public class GeneratorShipwreck implements IWorldGenerator
 	ResourceLocation SHIP_DOWN1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
 	ResourceLocation SHIP_DOWNFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
 	ResourceLocation SHIP_DOWNBK1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
-	
+
+	// Populating a chunk only guarantees that it and its +X/+Z neighbors exist;
+	// touching any other chunk triggers cascading generation.
+	private static final int GENERATION_AREA_SIZE = 32;
+	private static final int DROWNED_SPAWN_ATTEMPTS = 10;
+
 	private Biome[] biomes;
 	private int attemptsPerChunk;
 	private int chancePerAttempt;
 
-	public GeneratorShipwreck(int perChunk,int perAttempt ,Biome... biomes)
-	{
-		this.attemptsPerChunk = perChunk; 
-		this.chancePerAttempt = perAttempt; 
-		this.biomes = biomes; 
+	public GeneratorShipwreck(int perChunk, int perAttempt, Biome... biomes) {
+		this.attemptsPerChunk = perChunk;
+		this.chancePerAttempt = perAttempt;
+		this.biomes = biomes;
 	}
 
 	@Override
-	public void generate(Random rand, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider)
-	{
-        int x = chunkX * 16 + 8;
-        int z = chunkZ * 16 + 8;
-        BlockPos pos = new BlockPos(x, 0, z);
-        Biome biome = world.getBiomeForCoordsBody(pos);
-		
-        Block topBlock = world.getBlockState(world.getTopSolidOrLiquidBlock(pos)).getBlock();
-        
-		if (topBlock == Blocks.LAVA || topBlock == Blocks.AIR) return;
-		
-		for(int i = 0; i < biomes.length; i++)
-		{
-			if(biome == biomes[i])
-			{
-				for(int j = 0; j < attemptsPerChunk; j++)
-				{
-					if(rand.nextInt(chancePerAttempt) == 0)
-					{
+	public void generate(Random rand, int chunkX, int chunkZ, World world, IChunkGenerator generator,
+			IChunkProvider provider) {
+		int x = chunkX * 16 + 8;
+		int z = chunkZ * 16 + 8;
+		BlockPos pos = new BlockPos(x, 0, z);
+		Biome biome = world.getBiomeForCoordsBody(pos);
+
+		Block topBlock = world.getBlockState(world.getTopSolidOrLiquidBlock(pos)).getBlock();
+
+		if (topBlock == Blocks.LAVA || topBlock == Blocks.AIR)
+			return;
+
+		for (int i = 0; i < biomes.length; i++) {
+			if (biome == biomes[i]) {
+				for (int j = 0; j < attemptsPerChunk; j++) {
+					if (rand.nextInt(chancePerAttempt) == 0) {
 						spawnShipwreck(world, rand, pos.getX(), pos.getZ());
 					}
 				}
@@ -83,43 +84,49 @@ public class GeneratorShipwreck implements IWorldGenerator
 			}
 		}
 	}
-	
-	public void spawnShipwreck(World world, Random rand, int x, int z)
-	{
+
+	public void spawnShipwreck(World world, Random rand, int x, int z) {
 		MinecraftServer mcServer = world.getMinecraftServer();
 		TemplateManager manager = world.getSaveHandler().getStructureTemplateManager();
 		Rotation[] arotation = Rotation.values();
-		BlockPos pos = new BlockPos(x, 1, z);
-		
-		PlacementSettings placementsettings = (new PlacementSettings()).setReplacedBlock(Blocks.STRUCTURE_VOID).setRotation(arotation[rand.nextInt(arotation.length)]);
+
+		PlacementSettings placementsettings = (new PlacementSettings()).setReplacedBlock(Blocks.STRUCTURE_VOID)
+				.setRotation(arotation[rand.nextInt(arotation.length)]);
 		Template template = manager.get(mcServer, getRandomStructure(rand.nextInt(10)));
-
 		BlockPos size = template.getSize();
-		//** Grabs the lowest Y block from around the middle of the structure, for snapping to the floor. Just need the middle, because no need to check each corner, it's cooler for overhangs and such.*/
-		BlockPos placeCheck = pos.add(Template.transformedBlockPos(placementsettings, new BlockPos(0 + (size.getX()/2), 0, 0 + (size.getZ()/2))));
-		
-		//** Uses placeCheck to set the y to the Seafloor. */
-		pos = new BlockPos(x, getSeaFloor(world, placeCheck.getX(), placeCheck.getZ()).getY(), z);
-				
-		/** This buries the ship down a bit. */
-		pos = pos.down(rand.nextInt(6));
 
-		
+		int areaMinX = (x >> 4) << 4;
+		int areaMinZ = (z >> 4) << 4;
+		BlockPos cornerA = Template.transformedBlockPos(placementsettings, BlockPos.ORIGIN);
+		BlockPos cornerB = Template.transformedBlockPos(placementsettings, size.add(-1, -1, -1));
+		int minX = areaMinX - Math.min(cornerA.getX(), cornerB.getX());
+		int maxX = areaMinX + GENERATION_AREA_SIZE - 1 - Math.max(cornerA.getX(), cornerB.getX());
+		int minZ = areaMinZ - Math.min(cornerA.getZ(), cornerB.getZ());
+		int maxZ = areaMinZ + GENERATION_AREA_SIZE - 1 - Math.max(cornerA.getZ(), cornerB.getZ());
+		if (minX > maxX || minZ > maxZ)
+			return;
+
+		x = MathHelper.clamp(x, minX, maxX);
+		z = MathHelper.clamp(z, minZ, maxZ);
+
+		// The seafloor is sampled at the structure's center only, so overhangs are
+		// kept.
+		BlockPos placeCheck = new BlockPos(x, 1, z).add(
+				Template.transformedBlockPos(placementsettings, new BlockPos(size.getX() / 2, 0, size.getZ() / 2)));
+		BlockPos pos = new BlockPos(x, getSeaFloor(world, placeCheck.getX(), placeCheck.getZ()).getY(), z)
+				.down(rand.nextInt(6));
+
 		template.addBlocksToWorld(world, pos, placementsettings);
-	
-		
+
 		Map<BlockPos, String> map = template.getDataBlocks(pos, placementsettings);
-        for (Entry<BlockPos, String> entry : map.entrySet())
-        {
-        	doDataBlockLoading(entry, pos, world, rand);
-        }
+		for (Entry<BlockPos, String> entry : map.entrySet()) {
+			doDataBlockLoading(entry, pos, world, rand, areaMinX, areaMinZ);
+		}
 	}
-	
+
 	/** Picks which Shipwreck to generate. */
-	protected ResourceLocation getRandomStructure(int grab)
-	{
-		switch (grab)
-		{
+	protected ResourceLocation getRandomStructure(int grab) {
+		switch (grab) {
 			case 0:
 				return SHIP_UP1;
 			case 1:
@@ -143,75 +150,83 @@ public class GeneratorShipwreck implements IWorldGenerator
 		}
 		return SHIP_FULL;
 	}
-	
-	protected void doDataBlockLoading(Entry<BlockPos, String> entry, BlockPos pos, World worldIn, Random rand)
-    {
+
+	protected void doDataBlockLoading(Entry<BlockPos, String> entry, BlockPos pos, World worldIn, Random rand,
+			int areaMinX, int areaMinZ) {
 		BlockPos blockpos2 = entry.getKey();
-		
-        if ("map_chest".equals(entry.getValue()))
-        {
-            worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING, EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
-            TileEntity tileentity = worldIn.getTileEntity(blockpos2);
 
-            if (tileentity instanceof TileEntityChest)
-            {
-                ((TileEntityChest)tileentity).setLootTable(LootTableHandler.SHIPWRECK_MAP, rand.nextLong());
-            }
-        }
-        if ("supply_chest".equals(entry.getValue()))
-        {
-            worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING, EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
-            TileEntity tileentity = worldIn.getTileEntity(blockpos2);
+		if ("map_chest".equals(entry.getValue())) {
+			worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING,
+					EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
+			TileEntity tileentity = worldIn.getTileEntity(blockpos2);
 
-            if (tileentity instanceof TileEntityChest)
-            {
-                ((TileEntityChest)tileentity).setLootTable(LootTableHandler.SHIPWRECK_SUPPLY, rand.nextLong());
-            }
-        }
-        if ("tresure_chest".equals(entry.getValue()))
-        {
-            worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING, EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
-            TileEntity tileentity = worldIn.getTileEntity(blockpos2);
+			if (tileentity instanceof TileEntityChest) {
+				((TileEntityChest) tileentity).setLootTable(LootTableHandler.SHIPWRECK_MAP, rand.nextLong());
+			}
+		}
+		if ("supply_chest".equals(entry.getValue())) {
+			worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING,
+					EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
+			TileEntity tileentity = worldIn.getTileEntity(blockpos2);
 
-            if (tileentity instanceof TileEntityChest)
-            {
-                ((TileEntityChest)tileentity).setLootTable(LootTableHandler.SHIPWRECK_TREASURE, rand.nextLong());
-            }
-        }
-        
-        //** Spawns 1-8 Drowned around the area of the Data Block. */
-        if ("drowned".equals(entry.getValue()) && ConfigHandler.worldGen.shipwreck.enableShipwreckDrowned && ConfigHandler.entity.drowned.enableDrowned)
-        {
-        	for (int i = 0; i < rand.nextInt(8)+1; i++)
-        	{
-        		blockpos2 = blockpos2.add(rand.nextInt(4) - rand.nextInt(4), rand.nextInt(4) - rand.nextInt(4), rand.nextInt(4) - rand.nextInt(4));
-            	
-                if (worldIn.getBlockState(blockpos2).getMaterial() == Material.WATER && worldIn.getBlockState(blockpos2.up()).getMaterial() == Material.WATER)
-                {
-                	EntityDrowned entitydrowned = new EntityDrowned(worldIn);
-					entitydrowned.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null);
-                    entitydrowned.enablePersistence();
-                    entitydrowned.moveToBlockPosAndAngles(blockpos2, 0.0F, 0.0F);
-                    
-                    worldIn.spawnEntity(entitydrowned);
-                }
-                else
-                { i -= 1; }
-        	}
-        } 
-    }	
-	
-	public static BlockPos getSeaFloor(World world, int x, int z)
-    {
-    	int yPos = Math.max(world.getSeaLevel() - 2, 1);;
-    	BlockPos pos = new BlockPos(x, yPos, z);
-    	
-        for (; pos.getY() > 0; pos = pos.down())
-        {
-        	IBlockState state = world.getBlockState(pos);
-        	if (!(state.getBlock().isReplaceable(world, pos)) && state.getMaterial() != Material.LEAVES && state.getMaterial() != Material.ICE && state.getMaterial() != Material.WATER)
-        	{ break;}
-        }
-        return pos;
-    }
+			if (tileentity instanceof TileEntityChest) {
+				((TileEntityChest) tileentity).setLootTable(LootTableHandler.SHIPWRECK_SUPPLY, rand.nextLong());
+			}
+		}
+		if ("tresure_chest".equals(entry.getValue())) {
+			worldIn.setBlockState(blockpos2, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING,
+					EnumFacing.Plane.HORIZONTAL.random(rand)), 3);
+			TileEntity tileentity = worldIn.getTileEntity(blockpos2);
+
+			if (tileentity instanceof TileEntityChest) {
+				((TileEntityChest) tileentity).setLootTable(LootTableHandler.SHIPWRECK_TREASURE, rand.nextLong());
+			}
+		}
+
+		if ("drowned".equals(entry.getValue()) && ConfigHandler.worldGen.shipwreck.enableShipwreckDrowned
+				&& ConfigHandler.entity.drowned.enableDrowned) {
+			int drownedCount = rand.nextInt(8) + 1;
+
+			for (int i = 0; i < drownedCount; i++) {
+				for (int attempt = 0; attempt < DROWNED_SPAWN_ATTEMPTS; attempt++) {
+					BlockPos spawnPos = blockpos2.add(rand.nextInt(4) - rand.nextInt(4),
+							rand.nextInt(4) - rand.nextInt(4), rand.nextInt(4) - rand.nextInt(4));
+
+					if (!isInsideGenerationArea(spawnPos, areaMinX, areaMinZ))
+						continue;
+
+					if (worldIn.getBlockState(spawnPos).getMaterial() == Material.WATER
+							&& worldIn.getBlockState(spawnPos.up()).getMaterial() == Material.WATER) {
+						EntityDrowned entitydrowned = new EntityDrowned(worldIn);
+						entitydrowned.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null);
+						entitydrowned.enablePersistence();
+						entitydrowned.moveToBlockPosAndAngles(spawnPos, 0.0F, 0.0F);
+
+						worldIn.spawnEntity(entitydrowned);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean isInsideGenerationArea(BlockPos pos, int areaMinX, int areaMinZ) {
+		return pos.getX() >= areaMinX && pos.getX() < areaMinX + GENERATION_AREA_SIZE && pos.getZ() >= areaMinZ
+				&& pos.getZ() < areaMinZ + GENERATION_AREA_SIZE;
+	}
+
+	public static BlockPos getSeaFloor(World world, int x, int z) {
+		int yPos = Math.max(world.getSeaLevel() - 2, 1);
+		;
+		BlockPos pos = new BlockPos(x, yPos, z);
+
+		for (; pos.getY() > 0; pos = pos.down()) {
+			IBlockState state = world.getBlockState(pos);
+			if (!(state.getBlock().isReplaceable(world, pos)) && state.getMaterial() != Material.LEAVES
+					&& state.getMaterial() != Material.ICE && state.getMaterial() != Material.WATER) {
+				break;
+			}
+		}
+		return pos;
+	}
 }

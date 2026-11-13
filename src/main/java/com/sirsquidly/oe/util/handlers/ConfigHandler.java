@@ -1832,9 +1832,9 @@ public class ConfigHandler
 
 				@RequiresMcRestart
 			    @Config.LangKey("oe.config.entity.drownedCaptainSetChance")
-			    @Config.Comment("The chance for a drowned to be a drowned captain. Calculated as '(this x Clamped Regional Difficulty)%'")
+			    @Config.Comment("The chance (in %) for a drowned to be a drowned captain, including the drowned generated in Shipwrecks.")
 				@Config.RangeDouble(min = 0, max = 100)
-			    public double drownedCaptainSetChance = 0.01;
+			    public double drownedCaptainSetChance = 1.0;
 
 				@RequiresMcRestart
 			    @Config.LangKey("oe.config.entity.enableDrownedCaptainTexture")

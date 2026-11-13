@@ -20,15 +20,11 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.ArrayUtils;
 
-import javax.annotation.Nullable;
 import java.util.List;
-import java.util.UUID;
 
 public class TileStasis extends TileEntity implements ITickable
 {
 	public EntityLivingBase attackTarget;
-	@Nullable
-	private UUID attackTargetUUID;
 
 	public boolean isActive;
 	public boolean isElder;

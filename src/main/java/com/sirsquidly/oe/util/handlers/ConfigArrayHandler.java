@@ -111,7 +111,7 @@ public class ConfigArrayHandler
 			{
 				Main.logger.error(split[0] + " is not a proper block!");
 			}
-			else if (CRABDIGFROM.contains(new ResourceLocation(split[0])))
+			else if (CRABDIGFROM.contains(getBlockFromString(split[0])))
 			{
 				Main.logger.error(split[0] + " has multiple crab digging loot tables set in the config! Only the first listed will be used!");
 			}
@@ -153,7 +153,7 @@ public class ConfigArrayHandler
 			else
 			{
 				itemClamConvertFrom.add(getItemStackFromString(split[0]));
-				itemClamConvertTime.add(Integer.valueOf(split[1]));
+				itemClamConvertTime.add(time);
 				itemClamConvertTo.add(getItemStackFromString(split[2]));
 			}
 		}

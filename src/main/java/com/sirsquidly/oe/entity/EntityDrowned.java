@@ -278,10 +278,10 @@ public class EntityDrowned extends EntityZombie implements IRangedAttackMob
 
         this.setCanPickUpLoot(this.rand.nextFloat() < 0.55F * f);
         
-        if (this.rand.nextFloat() < f * (ConfigHandler.entity.drowned.drownedCaptain.drownedCaptainSetChance * 0.01F) && ConfigHandler.entity.drowned.drownedCaptain.enableDrownedCaptain)
+        if (this.rand.nextFloat() < ConfigHandler.entity.drowned.drownedCaptain.drownedCaptainSetChance * 0.01D && ConfigHandler.entity.drowned.drownedCaptain.enableDrownedCaptain)
         {
         	this.setIsCaptain(true);	
-        	this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).applyModifier(new AttributeModifier("Captain drowned bonus", ConfigHandler.entity.drowned.drownedCaptain.drownedCaptainHealthMultiplier, 2));
+        	this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).applyModifier(new AttributeModifier("Captain drowned bonus", Math.max(ConfigHandler.entity.drowned.drownedCaptain.drownedCaptainHealthMultiplier, 0.1D) - 1.0D, 2));
         	this.setHealth(this.getMaxHealth());
         	this.setCanPickUpLoot(true);
         }
@@ -299,7 +299,6 @@ public class EntityDrowned extends EntityZombie implements IRangedAttackMob
     	{
     		if (ConfigHandler.item.trident.enableTrident)
     		{
-    			float f = difficulty.getClampedAdditionalDifficulty();
     			this.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, new ItemStack(OEItems.TRIDENT_ORIG));
     		}
     		if (ConfigHandler.item.conch.enableConch)

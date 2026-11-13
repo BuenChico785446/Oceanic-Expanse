@@ -1,1 +1,0 @@
-Separately, GeneratorShipwreck maps SHIP_SIDEFT1, SHIP_DOWN1 and SHIP_DOWNFT1 to the wrong files (sidebk1 / downbk1). Because of that, shipwreck_sideft1, shipwreck_down1 and shipwreck_downft1 never generate. I didn’t change it, because fixing it would make the long wrecks more common.

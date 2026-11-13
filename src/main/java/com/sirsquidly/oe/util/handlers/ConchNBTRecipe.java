@@ -14,36 +14,33 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * 	Custom recipe type used to transfer the Conch's NBT tags over to the Magic Conch properly.
+ * Custom recipe type used to transfer the Conch's NBT tags over to the Magic
+ * Conch properly.
  *
- * 	Based on the `RecipeArmorDyes` class, with countless liberties taken.
+ * Based on the `RecipeArmorDyes` class, with countless liberties taken.
  */
 @ParametersAreNonnullByDefault
-public class ConchNBTRecipe extends IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
-{
+public class ConchNBTRecipe extends IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
     @Override
-    public boolean matches(InventoryCrafting inv, World worldIn)
-    {
+    public boolean matches(InventoryCrafting inv, World worldIn) {
         ItemStack conchItem = ItemStack.EMPTY;
         ItemStack pearlItem = ItemStack.EMPTY;
 
-        for (int i = 0; i < inv.getSizeInventory(); ++i)
-        {
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack itemstack1 = inv.getStackInSlot(i);
 
-            if (!itemstack1.isEmpty())
-            {
-                if (itemstack1.getItem() == OEItems.CONCH)
-                {
-                    if (conchItem.isEmpty()) conchItem = itemstack1;
-                    else return false;
-                }
-                else
-                {
-                    if (itemstack1.getItem() == OEItems.PEARL)
-                    {
-                        if (pearlItem.isEmpty()) pearlItem = itemstack1;
-                        else return false;
+            if (!itemstack1.isEmpty()) {
+                if (itemstack1.getItem() == OEItems.CONCH) {
+                    if (conchItem.isEmpty())
+                        conchItem = itemstack1;
+                    else
+                        return false;
+                } else {
+                    if (itemstack1.getItem() == OEItems.PEARL) {
+                        if (pearlItem.isEmpty())
+                            pearlItem = itemstack1;
+                        else
+                            return false;
                     }
                 }
             }
@@ -53,18 +50,14 @@ public class ConchNBTRecipe extends IForgeRegistryEntry.Impl<IRecipe> implements
 
     @Override
     @Nonnull
-    public ItemStack getCraftingResult(InventoryCrafting inv)
-    {
+    public ItemStack getCraftingResult(InventoryCrafting inv) {
         ItemStack resultStack = new ItemStack(OEItems.CONCH_MAGIC);
 
-        for (int k = 0; k < inv.getSizeInventory(); ++k)
-        {
+        for (int k = 0; k < inv.getSizeInventory(); ++k) {
             ItemStack stack = inv.getStackInSlot(k);
 
-            if (!stack.isEmpty() && stack.getItem() == OEItems.CONCH)
-            {
-                if (stack.hasTagCompound())
-                {
+            if (!stack.isEmpty() && stack.getItem() == OEItems.CONCH) {
+                if (stack.hasTagCompound()) {
                     resultStack.setTagCompound(stack.getTagCompound().copy());
                 }
                 break;
@@ -74,20 +67,21 @@ public class ConchNBTRecipe extends IForgeRegistryEntry.Impl<IRecipe> implements
         return resultStack;
     }
 
-    public ItemStack getRecipeOutput() { return ItemStack.EMPTY; }
+    public ItemStack getRecipeOutput() {
+        return ItemStack.EMPTY;
+    }
 
-    public boolean isDynamic() { return true; }
+    public boolean isDynamic() {
+        return true;
+    }
 
-    public boolean canFit(int width, int height)
-    {
+    public boolean canFit(int width, int height) {
         return width * height >= 2;
     }
 
-    public static class Factory implements IRecipeFactory
-    {
+    public static class Factory implements IRecipeFactory {
         @Override
-        public IRecipe parse(JsonContext context, JsonObject json)
-        {
+        public IRecipe parse(JsonContext context, JsonObject json) {
             return new ConchNBTRecipe();
         }
     }

@@ -656,7 +656,6 @@ oe.config.entity.drownedCaptainHealthMultiplier=溺尸船长生命倍数
 oe.config.entity.drownedCaptainHealthMultiplier.tooltip=溺尸船长的生命值倍数。该值乘以溺尸基础生命值（默认20）进行计算
 oe.config.entity.drownedCaptainMaxNearbyForSummon=溺尸船长生成上限
 oe.config.entity.drownedCaptainMaxNearbyForSummon.tooltip=如果附近溺尸数量超过此数值，则阻止溺尸船长进行召唤
-oe.config.entity.drownedCaptainSpawnsEquipt=溺尸船长的生成已设置
 oe.config.entity.drownedCaptainEquippedSpawns=溺尸船长生成多样化溺尸
 oe.config.entity.drownedCaptainEquippedSpawns.tooltip=溺尸船长生成更多可能的溺尸。这将允许溺尸拥有三叉戟，成为幼年溺尸，甚至成为额外的溺尸船长！
 oe.config.entity.drownedCaptainConchSoundDistance=溺尸船长海螺奏声传播范围

@@ -141,7 +141,14 @@ public class ConfigArrayHandler
 			}
 
 			ItemStack stackA = getItemStackFromString(split[0]);
-			Integer time = Integer.valueOf(split[1]);
+			int time;
+			try
+			{ time = Integer.parseInt(split[1]); }
+			catch (NumberFormatException e)
+			{
+				Main.logger.error(split[1] + " in " + S + " is not a whole number! Skipping...");
+				continue;
+			}
 			ItemStack stackB = getItemStackFromString(split[2]);
 
 			if (stackA == null)
@@ -247,7 +254,13 @@ public class ConfigArrayHandler
 		}
 		if(ripString.length > 2)
 		{
-			meta = Integer.parseInt(ripString[2]);
+			try
+			{ meta = Integer.parseInt(ripString[2]); }
+			catch (NumberFormatException e)
+			{
+				Main.logger.error("Improper metadata in " + string + "!");
+				return null;
+			}
 
 			if(meta == -1)
 			{ meta = null; }
@@ -280,6 +293,12 @@ public class ConfigArrayHandler
 	{
 		String[] ripString = string.split(":");
 
+		if (ripString.length < 2)
+		{
+			Main.logger.error("Improperly written item " + string + "!");
+			return null;
+		}
+
 		Item item = GameRegistry.findRegistry(Item.class).getValue(new ResourceLocation(ripString[0], ripString[1]));
 		int meta = 0;
 
@@ -290,7 +309,13 @@ public class ConfigArrayHandler
 		}
 		if(ripString.length > 2)
 		{
-			meta = Integer.parseInt(ripString[2]);
+			try
+			{ meta = Integer.parseInt(ripString[2]); }
+			catch (NumberFormatException e)
+			{
+				Main.logger.error("Improper metadata in " + string + "!");
+				return null;
+			}
 
 			if(meta == -1)
 			{ meta = 0; }

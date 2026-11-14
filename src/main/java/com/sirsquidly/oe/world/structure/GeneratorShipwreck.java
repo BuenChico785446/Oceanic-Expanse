@@ -40,10 +40,10 @@ public class GeneratorShipwreck implements IWorldGenerator
 	ResourceLocation SHIP_UPFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_upft1");
 	ResourceLocation SHIP_UPBK1 = new ResourceLocation(Main.MOD_ID, "shipwreck_upbk1");
 	ResourceLocation SHIP_SIDE1 = new ResourceLocation(Main.MOD_ID, "shipwreck_side1");
-	ResourceLocation SHIP_SIDEFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_sidebk1");
+	ResourceLocation SHIP_SIDEFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_sideft1");
 	ResourceLocation SHIP_SIDEBK1 = new ResourceLocation(Main.MOD_ID, "shipwreck_sidebk1");
-	ResourceLocation SHIP_DOWN1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
-	ResourceLocation SHIP_DOWNFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
+	ResourceLocation SHIP_DOWN1 = new ResourceLocation(Main.MOD_ID, "shipwreck_down1");
+	ResourceLocation SHIP_DOWNFT1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downft1");
 	ResourceLocation SHIP_DOWNBK1 = new ResourceLocation(Main.MOD_ID, "shipwreck_downbk1");
 	
 	// Populating a chunk only guarantees that it and its +X/+Z neighbors exist; touching any other chunk triggers cascading generation.
@@ -96,7 +96,7 @@ public class GeneratorShipwreck implements IWorldGenerator
 		Rotation[] arotation = Rotation.values();
 		
 		PlacementSettings placementsettings = (new PlacementSettings()).setReplacedBlock(Blocks.STRUCTURE_VOID).setRotation(arotation[rand.nextInt(arotation.length)]);
-		Template template = manager.get(mcServer, getRandomStructure(rand.nextInt(10)));
+		Template template = manager.get(mcServer, getRandomStructure(rand.nextInt(11)));
 		BlockPos size = template.getSize();
 
 		int areaMinX = (x >> 4) << 4;
